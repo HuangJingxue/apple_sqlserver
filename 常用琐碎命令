@@ -1,1 +1,174 @@
 
+1.Max degree of Parallelism 设置不合理，出现CXPACKET等待较多的情况，可以通过调整Max Degree of Parallelism（MAXDOP）来解决
+WITH [Waits] AS
+    (SELECT
+        [wait_type],
+        [wait_time_ms] / 1000.0 AS [WaitS],
+        ([wait_time_ms] - [signal_wait_time_ms]) / 1000.0 AS [ResourceS],
+        [signal_wait_time_ms] / 1000.0 AS [SignalS],
+        [waiting_tasks_count] AS [WaitCount],
+       100.0 * [wait_time_ms] / SUM ([wait_time_ms]) OVER() AS [Percentage],
+        ROW_NUMBER() OVER(ORDER BY [wait_time_ms] DESC) AS [RowNum]
+    FROM sys.dm_os_wait_stats
+    WHERE [wait_type] NOT IN (
+        N'BROKER_EVENTHANDLER', N'BROKER_RECEIVE_WAITFOR',
+        N'BROKER_TASK_STOP', N'BROKER_TO_FLUSH',
+        N'BROKER_TRANSMITTER', N'CHECKPOINT_QUEUE',
+        N'CHKPT', N'CLR_AUTO_EVENT',
+        N'CLR_MANUAL_EVENT', N'CLR_SEMAPHORE',
+        -- Maybe uncomment these four if you have mirroring issues
+        N'DBMIRROR_DBM_EVENT', N'DBMIRROR_EVENTS_QUEUE',
+        N'DBMIRROR_WORKER_QUEUE', N'DBMIRRORING_CMD',
+        N'DIRTY_PAGE_POLL', N'DISPATCHER_QUEUE_SEMAPHORE',
+        N'EXECSYNC', N'FSAGENT',
+        N'FT_IFTS_SCHEDULER_IDLE_WAIT', N'FT_IFTSHC_MUTEX',
+        -- Maybe uncomment these six if you have AG issues
+        N'HADR_CLUSAPI_CALL', N'HADR_FILESTREAM_IOMGR_IOCOMPLETION',
+        N'HADR_LOGCAPTURE_WAIT', N'HADR_NOTIFICATION_DEQUEUE',
+        N'HADR_TIMER_TASK', N'HADR_WORK_QUEUE',
+        N'KSOURCE_WAKEUP', N'LAZYWRITER_SLEEP',
+        N'LOGMGR_QUEUE', N'MEMORY_ALLOCATION_EXT',
+        N'ONDEMAND_TASK_QUEUE',
+        N'PREEMPTIVE_XE_GETTARGETSTATE',
+        N'PWAIT_ALL_COMPONENTS_INITIALIZED',
+        N'PWAIT_DIRECTLOGCONSUMER_GETNEXT',
+        N'QDS_PERSIST_TASK_MAIN_LOOP_SLEEP', N'QDS_ASYNC_QUEUE',
+        N'QDS_CLEANUP_STALE_QUERIES_TASK_MAIN_LOOP_SLEEP',
+        N'QDS_SHUTDOWN_QUEUE', N'REDO_THREAD_PENDING_WORK',
+        N'REQUEST_FOR_DEADLOCK_SEARCH', N'RESOURCE_QUEUE',
+        N'SERVER_IDLE_CHECK', N'SLEEP_BPOOL_FLUSH',
+        N'SLEEP_DBSTARTUP', N'SLEEP_DCOMSTARTUP',
+        N'SLEEP_MASTERDBREADY', N'SLEEP_MASTERMDREADY',
+        N'SLEEP_MASTERUPGRADED', N'SLEEP_MSDBSTARTUP',
+        N'SLEEP_SYSTEMTASK', N'SLEEP_TASK',
+        N'SLEEP_TEMPDBSTARTUP', N'SNI_HTTP_ACCEPT',
+        N'SP_SERVER_DIAGNOSTICS_SLEEP', N'SQLTRACE_BUFFER_FLUSH',
+        N'SQLTRACE_INCREMENTAL_FLUSH_SLEEP',
+        N'SQLTRACE_WAIT_ENTRIES', N'WAIT_FOR_RESULTS',
+        N'WAITFOR', N'WAITFOR_TASKSHUTDOWN',
+        N'WAIT_XTP_RECOVERY',
+        N'WAIT_XTP_HOST_WAIT', N'WAIT_XTP_OFFLINE_CKPT_NEW_LOG',
+        N'WAIT_XTP_CKPT_CLOSE', N'XE_DISPATCHER_JOIN',
+        N'XE_DISPATCHER_WAIT', N'XE_TIMER_EVENT')
+    AND [waiting_tasks_count] > 0
+    )
+SELECT
+    MAX ([W1].[wait_type]) AS [WaitType],
+    CAST (MAX ([W1].[WaitS]) AS DECIMAL (16,2)) AS [Wait_S],
+    CAST (MAX ([W1].[ResourceS]) AS DECIMAL (16,2)) AS [Resource_S],
+    CAST (MAX ([W1].[SignalS]) AS DECIMAL (16,2)) AS [Signal_S],
+    MAX ([W1].[WaitCount]) AS [WaitCount],
+    CAST (MAX ([W1].[Percentage]) AS DECIMAL (5,2)) AS [Percentage],
+    CAST ((MAX ([W1].[WaitS]) / MAX ([W1].[WaitCount])) AS DECIMAL (16,4)) AS [AvgWait_S],
+    CAST ((MAX ([W1].[ResourceS]) / MAX ([W1].[WaitCount])) AS DECIMAL (16,4)) AS [AvgRes_S],
+    CAST ((MAX ([W1].[SignalS]) / MAX ([W1].[WaitCount])) AS DECIMAL (16,4)) AS [AvgSig_S]
+FROM [Waits] AS [W1]
+INNER JOIN [Waits] AS [W2]
+    ON [W2].[RowNum] <= [W1].[RowNum]
+GROUP BY [W1].[RowNum]
+HAVING SUM ([W2].[Percentage]) - MAX( [W1].[Percentage] ) < 95; -- percentage threshold
+GO
+
+2、通过查询语句寻找耗CPU的语句
+SELECT TOP 50
+[Avg. MultiCore/CPU time(sec)] = qs.total_worker_time / 1000000 / qs.execution_count,
+[Total MultiCore/CPU time(sec)] = qs.total_worker_time / 1000000,
+[Avg. Elapsed Time(sec)] = qs.total_elapsed_time / 1000000 / qs.execution_count,
+[Total Elapsed Time(sec)] = qs.total_elapsed_time / 1000000,
+qs.execution_count,
+[Avg. I/O] = (total_logical_reads + total_logical_writes) / qs.execution_count,
+[Total I/O] = total_logical_reads + total_logical_writes,
+Query = SUBSTRING(qt.[text], (qs.statement_start_offset / 2) + 1,
+(
+(
+CASE qs.statement_end_offset
+WHEN -1 THEN DATALENGTH(qt.[text])
+ELSE qs.statement_end_offset
+END - qs.statement_start_offset
+) / 2
+) + 1
+),
+Batch = qt.[text],
+[DB] = DB_NAME(qt.[dbid]),
+qs.last_execution_time,
+qp.query_plan
+FROM sys.dm_exec_query_stats AS qs
+CROSS APPLY sys.dm_exec_sql_text(qs.[sql_handle]) AS qt
+CROSS APPLY sys.dm_exec_query_plan(qs.plan_handle) AS qp
+where qs.execution_count > 5        --more than 5 occurences
+ORDER BY [Total MultiCore/CPU time(sec)] DESC
+
+3、查找top10的语句
+select top 10
+            qs.plan_handle planHandle,
+            qs.query_hash queryHash,
+            db_name(st.dbid) db,
+            (SELECT TOP 1 SUBSTRING(st.text,statement_start_offset / 2+1 ,   
+                  ( (CASE WHEN statement_end_offset = -1   
+                     THEN (LEN(CONVERT(nvarchar(max),st.text)) * 2)   
+                     ELSE statement_end_offset END)  - statement_start_offset) / 2+1)) as text, 
+            qs.total_worker_time totalWorkerTime, 
+            100.0 * qs.total_worker_time / sum(qs.total_worker_time) over() as workerTimePct,
+            qs.total_elapsed_time totalElapsedTime, 
+            100.0 * qs.total_elapsed_time / sum(qs.total_elapsed_time) over() as elapsedTimePct,
+            qs.execution_count executionCount,
+            100.0 * qs.execution_count / sum(qs.execution_count) over() as executionCountPct,
+            qs.total_logical_writes totalLogicalWrites,
+            qs.total_logical_reads totalLogicalReads,
+            qs.total_physical_reads totalPhysicalReads,
+            qs.last_execution_time lastExecutionTime 
+            FROM sys.dm_exec_query_stats qs 
+            CROSS APPLY sys.dm_exec_sql_text(qs.plan_handle) st 
+            ORDER BY total_worker_time DESC
+            
+            
+            
+4、三个系统动态视图来查找缺失的索引
+USE TestDb
+GO
+
+SELECT TOP 100 
+    c.equality_columns
+    , c.inequality_columns
+    , c.included_columns
+    , create_Index = 'CREATE INDEX IX_' + REPLACE(REPLACE(REPLACE(equality_columns, '[', ''), ']',''), ',', '')
+        + '_' + REPLACE(REPLACE(REPLACE(inequality_columns, '[', ''), ']',''), ',', '') 
+        + '_' +REPLACE(REPLACE(REPLACE(included_columns, '[', '@'), ']',''), ', ', '_')  + char(10)
+        + 'ON ' + SCHEMA_NAME(tb.schema_id) + '.' + object_name(tb.object_id) 
+        + '('
+            + case 
+                when c.equality_columns is not null and c.inequality_columns is not null 
+                    then c.equality_columns + ',' + c.inequality_columns
+                when c.equality_columns is not null and c.inequality_columns is null 
+                    then c.equality_columns
+                when c.inequality_columns is not null 
+                    then c.inequality_columns
+            end
+        + ')' + char(10)
+        + case 
+            when c.included_columns is not null 
+            then 'INCLUDE (' + c.included_columns + ')'
+            else ''
+        end + char(10)
+        + N'WITH (FILLFACTOR = 85);'
+FROM sys.dm_db_missing_index_group_stats a
+    INNER JOIN sys.dm_db_missing_index_groups b
+        ON a.group_handle = b.index_group_handle
+    INNER JOIN sys.dm_db_missing_index_details c
+        ON c.index_handle = b.index_handle
+    INNER JOIN sys.tables as tb
+        ON c.object_id = tb.object_id
+WHERE db_name(database_id) = db_name()
+    AND equality_columns is not null
+    AND tb.object_id = object_id('dbo.SalesOrder', 'U')
+ORDER BY a.avg_total_user_cost * a.avg_user_impact * (a.user_seeks + a.user_scans) DESC
+
+4.1 创建索引
+--=== Create Missing Indexes
+USE [TestDb]
+GO
+CREATE INDEX IX_UserID_OrderDate_@ItemID_@OrderQty_@Price
+ON dbo.SalesOrder([UserID],[OrderDate])
+INCLUDE ([ItemID], [OrderQty], [Price])
+WITH (FILLFACTOR = 85);
+GO
