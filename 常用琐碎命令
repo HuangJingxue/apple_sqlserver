@@ -172,3 +172,79 @@ ON dbo.SalesOrder([UserID],[OrderDate])
 INCLUDE ([ItemID], [OrderQty], [Price])
 WITH (FILLFACTOR = 85);
 GO
+
+4.2 获取索引碎片信息
+USE TestDb
+GO
+
+SELECT 
+        db_name(database_id) AS db_name
+        ,object_name(ix.object_id) AS object_name
+        ,ix.name
+        ,avg_fragmentation_in_percent
+        ,*
+FROM sys.dm_db_index_physical_stats(db_id(),object_id('dbo.SalesOrder','U'),NULL,NULL,'LIMITED') AS fra
+    CROSS APPLY sys.indexes AS ix WITH (NOLOCK) 
+WHERE ix.object_id = fra.object_id
+    and ix.index_id = fra.index_id
+
+EXEC sys.sp_spaceused SalesOrder
+
+4.3 重建索引
+USE TestDb
+GO
+
+ALTER INDEX ALL
+ON dbo.SalesOrder REBUILD
+WITH (ONLINE = ON, FILLFACTOR = 90)
+;
+在产品环境中重建索引需要十分小心，原因是：
+ 重建索引会消耗大量的系统I/O读写资源。
+ 重建索引会导致查询进程的死锁或者锁等待，尤其是非企业版SQL Server（企业版可以使用ONLINE选项来最大限度规避这个问题）。
+ 重建索引会导致数据库日志文件暴涨，而因此会给Database Mirroring、Log Shipping和Backup带来压力。
+所以，请选择业务低谷期进行索引碎片重整的操作。
+
+5、清空执行计划的缓存
+DBCC FREEPROCCACHE
+
+6、创建缺失索引
+USE AdventureWorks2008R2
+GO
+SELECT TOP 10
+    database_name = db_name(details.database_id)
+    , schema_name = SCHEMA_NAME(tb.schema_id)
+    , object_name = tb.name
+    , avg_estimated_impact = dm_migs.avg_user_impact*(dm_migs.user_seeks+dm_migs.user_scans)
+    , last_user_seek = dm_migs.last_user_seek
+    , create_index = 
+'CREATE INDEX [IX_' + OBJECT_NAME(details.OBJECT_ID,details.database_id) + '_'
++ REPLACE(REPLACE(REPLACE(ISNULL(details.equality_columns,''),', ','_'),'[',''),']','') 
++ CASE
+    WHEN details.equality_columns IS NOT NULL
+    AND details.inequality_columns IS NOT NULL THEN '_'
+    ELSE ''
+    END
+    + REPLACE(REPLACE(REPLACE(ISNULL(details.inequality_columns,''),', ','_'),'[',''),']','')
+    + ']'
+    + ' ON ' + details.statement
+    + ' (' + ISNULL (details.equality_columns,'')
+    + CASE WHEN details.equality_columns IS NOT NULL AND details.inequality_columns 
+    IS NOT NULL THEN ',' ELSE
+    '' END
+    + ISNULL (details.inequality_columns, '')
+    + ')'
+    + ISNULL (' INCLUDE (' + details.included_columns + ')', '')
+FROM sys.dm_db_missing_index_groups AS dm_mig WITH(NOLOCK)
+    INNER JOIN sys.dm_db_missing_index_group_stats AS dm_migs WITH(NOLOCK)
+    ON dm_migs.group_handle = dm_mig.index_group_handle
+    INNER JOIN sys.dm_db_missing_index_details AS details WITH(NOLOCK)
+    ON dm_mig.index_handle = details.index_handle
+    INNER JOIN sys.tables AS tb WITH(NOLOCK)
+    ON details.object_id = tb.object_id
+WHERE details.database_ID = DB_ID()
+ORDER BY Avg_Estimated_Impact DESC
+GO
+
+7、事务日志分析
+SELECT top 10 * FROM [sys].[fn_dblog](NULL,NULL)
+
