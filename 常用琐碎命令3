@@ -1,6 +1,8 @@
 
 backup database hjx_t to disk='d:\hjx_t.bak' --完整备份--
 
+backup database hjx_t to disk='d:\hjx_t_diff.bak' with differential --差异备份--
+
 insert into dbo.t1 values (4,'sahw')
 backup log hjx_t to disk='d:\hjx_t_log.bak' --日志备份--
 
