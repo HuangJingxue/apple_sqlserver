@@ -20,3 +20,12 @@ go
 restore database hjx_t from disk='d:\hjx_t.bak' with replace,norecovery
 
 restore log hjx_t from disk='d:\hjx_t_log.bak' with replace
+
+--不删除库还原为本实例其他库名，需要修改逻辑名对应的物理文件--
+restore database hjx from disk='d:\hjx_t.bak' with replace,norecovery,
+MOVE 'hjx' TO 'D:\SQLServer\Data\MSSQL11.MSSQLSERVER\MSSQL\DATA\hjx.mdf',
+MOVE 'hjx_log' TO 'D:\SQLServer\Data\MSSQL11.MSSQLSERVER\MSSQL\DATA\hjx_log.ldf'
+
+restore log hjx_t from disk='d:\hjx_t_log.bak' with replace,
+MOVE 'hjx' TO 'D:\SQLServer\Data\MSSQL11.MSSQLSERVER\MSSQL\DATA\hjx.mdf',
+MOVE 'hjx_log' TO 'D:\SQLServer\Data\MSSQL11.MSSQLSERVER\MSSQL\DATA\hjx_log.ldf'
