@@ -1,13 +1,10 @@
 
+--完整备份+日志备份--
 backup database hjx_t to disk='d:\hjx_t.bak' --完整备份--
-
-backup database hjx_t to disk='d:\hjx_t_diff.bak' with differential --差异备份--
-
 insert into dbo.t1 values (4,'sahw')
 backup log hjx_t to disk='d:\hjx_t_log.bak' --日志备份--
 
 DROP database hjx_t --删除数据库--
-
 RESTORE FILELISTONLY FROM DISK = N'd:\hjx_t.bak' --查看逻辑文件名--
 
 use master
@@ -23,6 +20,15 @@ MOVE 'hjx_log' TO 'D:\SQLServer\Data\MSSQL11.MSSQLSERVER\MSSQL\DATA\hjx_log.ldf'
 restore log hjx_t from disk='d:\hjx_t_log.bak' with replace,
 MOVE 'hjx' TO 'D:\SQLServer\Data\MSSQL11.MSSQLSERVER\MSSQL\DATA\hjx.mdf',
 MOVE 'hjx_log' TO 'D:\SQLServer\Data\MSSQL11.MSSQLSERVER\MSSQL\DATA\hjx_log.ldf'
+
+--完整备份+差异备份--
+backup database hjx_t to disk='d:\hjx_t.bak' --完整备份--
+backup database hjx_t to disk='d:\hjx_t_diff.bak' with differential --差异备份--
+
+use master
+go
+restore database hjx_t from disk='d:\hjx_t.bak' with replace,norecovery --还原数据库--
+restore database hjx_t from disk='d:\hjx_t_diff.bak' with replace --还原差异备份--
 
 
 --删除RDS数据库--
