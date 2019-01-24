@@ -54,6 +54,7 @@ ADD 'of' LANGUAGE 'Simplified Chinese';
 
 --收缩空间
 https://docs.microsoft.com/zh-cn/sql/t-sql/database-console-commands/dbcc-shrinkfile-transact-sql?view=sql-server-2017
+https://help.aliyun.com/knowledge_detail/41800.html?spm=5176.10695662.1996646101.searchclickresult.70b9206e32novV
 查询数据库的数据文件及日志文件的相关信息（包括文件组、当前文件大小、文件最大值、文件增长设置、文件逻辑名、文件路径等）
 select * from [数据库名].[dbo].[sysfiles]
 select name, convert(float,size) * (8192.0/1024.0)/1024. from [数据库名].dbo.sysfiles
