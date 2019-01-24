@@ -51,3 +51,21 @@ DROP 'of' LANGUAGE 'Simplified Chinese';
 --增加我们需要的干扰词，如"of"字
 ALTER FULLTEXT STOPLIST [T_FULLTEXT_STOPLIST_TableName]
 ADD 'of' LANGUAGE 'Simplified Chinese';
+
+--收缩空间
+https://docs.microsoft.com/zh-cn/sql/t-sql/database-console-commands/dbcc-shrinkfile-transact-sql?view=sql-server-2017
+查询数据库的数据文件及日志文件的相关信息（包括文件组、当前文件大小、文件最大值、文件增长设置、文件逻辑名、文件路径等）
+select * from [数据库名].[dbo].[sysfiles]
+select name, convert(float,size) * (8192.0/1024.0)/1024. from [数据库名].dbo.sysfiles
+
+查询当前数据库的磁盘使用情况
+Exec sp_spaceused
+
+该结果包含日志文件的大小，查看日志文件的大小的sql语句是：
+DBCC SQLPERF(LOGSPACE) 
+
+DBCC SHRINKDATABASE(dbname)
+USE [数据库名];  
+GO  
+DBCC SHRINKFILE (DataFile1, 7);  
+GO 
