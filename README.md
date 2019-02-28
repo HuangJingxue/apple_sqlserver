@@ -1,15 +1,17 @@
 官方Microsoft SQL文档链接：https://docs.microsoft.com/zh-cn/sql/?view=sql-server-2017#pivot=sqlserver&panel=sqlserver
+
 官方DBCC文档链接：https://docs.microsoft.com/zh-cn/sql/t-sql/database-console-commands/dbcc-transact-sql?view=sql-server-2017
+
 用于 SQL Server mssql cli 命令行查询工具：https://docs.microsoft.com/zh-cn/sql/tools/mssql-cli?view=sql-server-2017
 
-## 查看当前服务器名
+-- 查看当前服务器名
 select @@Servername
 
-### 查看库中表信息
+-- 查看库中表信息
 SELECT * FROM sys.tables
 where object_id =  245575913
 
-### 查看表定义
+
 --查看表结构
 
 USE hjx;  
@@ -66,14 +68,13 @@ FROM    dbo.syscolumns col
 WHERE   obj.name = 't2'--表名
 ORDER BY col.colorder ;
   
-
-### 查看索引
+-- 查看索引
 USE hjx;  
 GO  
 EXEC sp_helpindex N't1';  
 GO
 
-### 获取没有主键的所有用户表
+-- 获取没有主键的所有用户表
 SELECT SCHEMA_NAME(schema_id) AS schema_name  
     ,name AS table_name   
 FROM sys.tables   
@@ -82,6 +83,7 @@ ORDER BY schema_name, table_name;
 GO
 
 适用范围：SQL Server 2016 (13.x) 到 SQL Server 2017 和 Azure SQL Database。
+
 SELECT T1.object_id, T1.name as TemporalTableName, SCHEMA_NAME(T1.schema_id) AS TemporalTableSchema,  
 T2.name as HistoryTableName, SCHEMA_NAME(T2.schema_id) AS HistoryTableSchema,  
 T1.temporal_type_desc  
@@ -90,12 +92,11 @@ LEFT JOIN sys.tables T2
 ON T1.history_table_id = T2.object_id  
 ORDER BY T1.temporal_type desc  
 
-## 查看空间信息
-### 查看所有数据库的日志空间信息
+-- 查看空间信息
+-- 查看所有数据库的日志空间信息
 DBCC SQLPERF(LOGSPACE);  
 GO
 
-## 收缩空间
 
 -- 收缩文件 日志文件
 
