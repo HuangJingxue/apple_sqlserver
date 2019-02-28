@@ -7,15 +7,18 @@ where object_id =  245575913
 
 ### 查看表定义
 --查看表结构
+
 USE hjx;  
 GO  
 EXEC sp_help t2;  
 GO
 
 --查看表中列信息
+
 sp_columns t2
 
 --快速查看表结构（比较全面的）
+
 SELECT  CASE WHEN col.colorder = 1 THEN obj.name
                   ELSE ''
              END AS 表名,
