@@ -3,6 +3,7 @@
 官方Microsoft SQL文档链接：https://docs.microsoft.com/zh-cn/sql/?view=sql-server-2017#pivot=sqlserver&panel=sqlserver
 官方DBCC文档链接：https://docs.microsoft.com/zh-cn/sql/t-sql/database-console-commands/dbcc-transact-sql?view=sql-server-2017
 用于 SQL Server mssql cli 命令行查询工具：https://docs.microsoft.com/zh-cn/sql/tools/mssql-cli?view=sql-server-2017
+SQLServer指南：https://docs.microsoft.com/zh-cn/sql/relational-databases/sql-server-guides?view=sql-server-2017
 ```
 查看当前服务器名
 ```sql
