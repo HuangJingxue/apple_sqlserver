@@ -4,8 +4,11 @@
 
 用于 SQL Server mssql cli 命令行查询工具：https://docs.microsoft.com/zh-cn/sql/tools/mssql-cli?view=sql-server-2017
 
---查看当前服务器名
+查看当前服务器名
+```sql
 select @@Servername
+```
+
 
 --查看库中表信息
 SELECT * FROM sys.tables
