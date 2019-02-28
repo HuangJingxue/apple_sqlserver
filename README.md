@@ -1,5 +1,9 @@
 官方Microsoft SQL文档链接：https://docs.microsoft.com/zh-cn/sql/?view=sql-server-2017#pivot=sqlserver&panel=sqlserver
 官方DBCC文档链接：https://docs.microsoft.com/zh-cn/sql/t-sql/database-console-commands/dbcc-transact-sql?view=sql-server-2017
+用于 SQL Server mssql cli 命令行查询工具：https://docs.microsoft.com/zh-cn/sql/tools/mssql-cli?view=sql-server-2017
+
+## 查看当前服务器名
+select @@Servername
 
 ### 查看库中表信息
 SELECT * FROM sys.tables
@@ -91,3 +95,18 @@ ORDER BY T1.temporal_type desc
 DBCC SQLPERF(LOGSPACE);  
 GO
 
+## 收缩空间
+
+-- 收缩文件 日志文件
+
+USE [hjx]
+GO
+DBCC SHRINKFILE (N'hjx_log' , 0, TRUNCATEONLY)
+GO
+
+-- 收缩文件 数据文件
+
+USE [hjx]
+GO
+DBCC SHRINKFILE (N'hjx' , 0, TRUNCATEONLY)
+GO
