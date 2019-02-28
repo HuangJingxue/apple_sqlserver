@@ -1,9 +1,8 @@
+```text
 官方Microsoft SQL文档链接：https://docs.microsoft.com/zh-cn/sql/?view=sql-server-2017#pivot=sqlserver&panel=sqlserver
-
 官方DBCC文档链接：https://docs.microsoft.com/zh-cn/sql/t-sql/database-console-commands/dbcc-transact-sql?view=sql-server-2017
-
 用于 SQL Server mssql cli 命令行查询工具：https://docs.microsoft.com/zh-cn/sql/tools/mssql-cli?view=sql-server-2017
-
+```
 查看当前服务器名
 ```sql
 select @@Servername
@@ -11,23 +10,24 @@ select @@Servername
 
 
 --查看库中表信息
+```sql
 SELECT * FROM sys.tables
 where object_id =  245575913
-
+```
 
 --查看表结构
-
+```sql
 USE hjx;  
 GO  
 EXEC sp_help t2;  
 GO
-
+```
 --查看表中列信息
-
+```sql
 sp_columns t2
-
+```
 --快速查看表结构（比较全面的）
-
+```sql
 SELECT  CASE WHEN col.colorder = 1 THEN obj.name
                   ELSE ''
              END AS 表名,
@@ -70,14 +70,16 @@ FROM    dbo.syscolumns col
                                                          AND epTwo.name = 'MS_Description'
 WHERE   obj.name = 't2'--表名
 ORDER BY col.colorder ;
-  
+```  
 -- 查看索引
+```sql
 USE hjx;  
 GO  
 EXEC sp_helpindex N't1';  
 GO
-
+```
 -- 获取没有主键的所有用户表
+```sql
 SELECT SCHEMA_NAME(schema_id) AS schema_name  
     ,name AS table_name   
 FROM sys.tables   
@@ -94,23 +96,25 @@ FROM sys.tables T1
 LEFT JOIN sys.tables T2   
 ON T1.history_table_id = T2.object_id  
 ORDER BY T1.temporal_type desc  
-
+```
 -- 查看空间信息
 -- 查看所有数据库的日志空间信息
+```sql
 DBCC SQLPERF(LOGSPACE);  
 GO
-
+```
 
 -- 收缩文件 日志文件
-
+```sql
 USE [hjx]
 GO
 DBCC SHRINKFILE (N'hjx_log' , 0, TRUNCATEONLY)
 GO
-
+```
 -- 收缩文件 数据文件
-
+```sql
 USE [hjx]
 GO
 DBCC SHRINKFILE (N'hjx' , 0, TRUNCATEONLY)
 GO
+```
