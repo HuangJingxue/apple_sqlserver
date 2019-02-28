@@ -11,6 +11,7 @@ USE hjx;
 GO  
 EXEC sp_help t2;  
 GO
+
 --查看表中列信息
 sp_columns t2
 
