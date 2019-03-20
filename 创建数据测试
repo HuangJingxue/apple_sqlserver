@@ -1,0 +1,51 @@
+-- 创建表
+USE [hjx_t]
+GO
+
+/****** Object:  Table [dbo].[t1]    Script Date: 2019/3/20 13:45:45 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[t1](
+	[id] [int] NULL,
+	[name] [varchar](50) NULL,
+	[date] [datetime] NULL
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+ALTER TABLE [dbo].[t1] ADD  CONSTRAINT [DF_t1_date]  DEFAULT (getdate()) FOR [date]
+GO
+
+-- 创建存储过程 每条数据插入时休眠10S
+create procedure test1
+as
+declare @ID int
+set @ID =1
+while(@ID<10)
+begin
+WAITFOR DELAY '00:00:10';
+insert into [dbo].[t1] values(@ID,'lili',getdate())
+set @ID=@ID+1
+end
+GO
+
+-- 执行存储过程
+
+BEGIN   
+    EXECUTE test1;  
+END;  
+GO 
+
+-- 删除表以及存储过程
+delete from dbo.t1
+drop procedure test1
