@@ -49,3 +49,6 @@ GO
 -- 删除表以及存储过程
 delete from dbo.t1
 drop procedure test1
+
+
+休眠帮助：https://docs.microsoft.com/en-us/sql/t-sql/language-elements/waitfor-transact-sql?view=sql-server-2017
