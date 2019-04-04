@@ -5,7 +5,12 @@
 用于 SQL Server mssql cli 命令行查询工具：https://docs.microsoft.com/zh-cn/sql/tools/mssql-cli?view=sql-server-2017
 SQLServer指南：https://docs.microsoft.com/zh-cn/sql/relational-databases/sql-server-guides?view=sql-server-2017
 sql-server-samples：https://github.com/Microsoft/sql-server-samples/tree/master/samples
+
+MSSQL错误：https://docs.microsoft.com/zh-cn/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-2017#errors-16000-to-17999
 ```
+常见报错：
+17300  SQL Server 无法运行新的系统任务，原因是内存不足或配置的会话数超过了服务器允许的最大数。 请查看服务器是否有足够的内存。 请使用 sp_configure 以及选项 '用户连接' 查看允许的最大用户连接数。 请使用 sys.dm_exec_sessions 检查当前会话数，包括用户进程。
+
 查看当前服务器名
 ```sql
 select @@Servername
