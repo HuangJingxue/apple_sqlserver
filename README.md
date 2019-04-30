@@ -8,6 +8,24 @@ SQLServer指南：https://docs.microsoft.com/zh-cn/sql/relational-databases/sql-
 sql-server-samples：https://github.com/Microsoft/sql-server-samples/tree/master/samples
 
 MSSQL错误：https://docs.microsoft.com/zh-cn/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-2017#errors-16000-to-17999
+
+基础版与高可用版本区别
+参考：https://help.aliyun.com/document_detail/48980.html?spm=5176.11065259.1996646101.searchclickresult.1c6329b7pcYogT
+
+使用限制
+参考：https://help.aliyun.com/document_detail/26141.html?spm=5176.product26090.6.594.xny8sX
+
+SQLServer2012降级到SQLServer2008
+参考：https://yq.aliyun.com/articles/59964
+
+RDS SQL Server各版本实例的功能差异
+参考：https://help.aliyun.com/document_detail/44534.html?spm=5176.doc53729.2.9.DxchZR
+
+独享型
+参考：https://help.aliyun.com/document_detail/49875.html?spm=5176.11065259.1996646101.searchclickresult.26738137kIfIgI
+
+SQLServer WEB 和SQLServer EE的区别
+参考：https://technet.microsoft.com/zh-cn/library/cc645993(v=sql.110).aspx
 ```
 常见报错：
 17300  SQL Server 无法运行新的系统任务，原因是内存不足或配置的会话数超过了服务器允许的最大数。 请查看服务器是否有足够的内存。 请使用 sp_configure 以及选项 '用户连接' 查看允许的最大用户连接数。 请使用 sys.dm_exec_sessions 检查当前会话数，包括用户进程。
