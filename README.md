@@ -8,6 +8,7 @@ SQLServer指南：https://docs.microsoft.com/zh-cn/sql/relational-databases/sql-
 sql-server-samples：https://github.com/Microsoft/sql-server-samples/tree/master/samples
 SQLServer常见备份：http://mysql.taobao.org/monthly/2017/11/03/
 SQLServer按时间点备份还原：https://docs.microsoft.com/zh-cn/sql/t-sql/statements/restore-statements-transact-sql?view=sql-server-2017#restoring_to_pit_using_STOPAT
+SQLServer维护计划向导：https://docs.microsoft.com/zh-cn/sql/relational-databases/maintenance-plans/use-the-maintenance-plan-wizard?view=sql-server-2017&viewFallbackFrom=sql-server-previousversions
 
 MSSQL错误：https://docs.microsoft.com/zh-cn/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-2017#errors-16000-to-17999
 
