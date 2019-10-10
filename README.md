@@ -1,4 +1,5 @@
 ```text
+SysTools SQL日志分析器:https://www.sqlserverlogexplorer.com/
 官方SQLServer学习：https://docs.microsoft.com/zh-cn/sql/sql-server/tutorials-for-sql-server-2016?view=sql-server-2017
 官方Microsoft sqlserver 免费版下载地址：https://www.microsoft.com/zh-cn/sql-server/sql-server-downloads
 SQLServer版本下载：https://msdn.itellyou.cn/
