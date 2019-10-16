@@ -38,6 +38,11 @@ SQLServer WEB 和SQLServer EE的区别
 常见报错：
 17300  SQL Server 无法运行新的系统任务，原因是内存不足或配置的会话数超过了服务器允许的最大数。 请查看服务器是否有足够的内存。 请使用 sp_configure 以及选项 '用户连接' 查看允许的最大用户连接数。 请使用 sys.dm_exec_sessions 检查当前会话数，包括用户进程。
 
+查看sqlserver安装版本
+SELECT   @@VERSION as 版本情况
+
+SELECT SERVERPROPERTY('ProductVersion') as 产品版本编号, SERVERPROPERTY('ProductLevel') as 当前补丁版本,SERVERPROPERTY('edition') as 软件版本
+
 查看当前服务器名
 ```sql
 select @@Servername
