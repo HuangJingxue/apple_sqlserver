@@ -1,0 +1,3 @@
+关闭mirror
+ALTER DATABASE <database_name> SET PARTNER OFF
+drop database<database name>;
