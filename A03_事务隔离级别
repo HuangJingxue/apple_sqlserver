@@ -1,0 +1,6 @@
+帮助：https://docs.microsoft.com/zh-cn/sql/t-sql/statements/set-transaction-isolation-level-transact-sql?view=sql-server-ver15
+
+--修改隔离级别
+ALTER DATABASE oadb
+SET READ_COMMITTED_SNAPSHOT ON
+Go
