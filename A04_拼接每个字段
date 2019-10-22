@@ -1,0 +1,17 @@
+-- 拼接每个字段修改字符集
+--模板ALTER TABLE WF_ANONYMOUS_ACCESS ALTER COLUMN ANONYMOUS_ACCESS_ID varchar（32) COLLATE Chinese_PRC_CI_AS;
+select concat('ALTER TABLE ',
+a.name,
+' ',
+'ALTER COLUMN',
+' ',
+b.name,
+' ',
+c.data_type,
+case c.data_type when 'nvarchar' then concat('(',b.max_length/2,')') else concat('（',b.max_length,')') end,
+' COLLATE Chinese_PRC_CI_AS;'
+)
+FROM sys.tables a join sys.columns b on b.object_id = a.object_id
+join INFORMATION_SCHEMA.COLUMNS c on b.name=c.COLUMN_NAME and a.name=c.TABLE_NAME
+where b.collation_name <> 'Chinese_PRC_CI_AS'
+and a.name = 'WF_ANONYMOUS_ACCESS';
