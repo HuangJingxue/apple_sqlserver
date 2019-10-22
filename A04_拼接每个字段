@@ -1,6 +1,6 @@
 -- 拼接每个字段修改字符集
 --模板ALTER TABLE WF_ANONYMOUS_ACCESS ALTER COLUMN ANONYMOUS_ACCESS_ID varchar（32) COLLATE Chinese_PRC_CI_AS;
-```sql
+
 select concat('ALTER TABLE ',
 a.name,
 ' ',
@@ -16,4 +16,4 @@ FROM sys.tables a join sys.columns b on b.object_id = a.object_id
 join INFORMATION_SCHEMA.COLUMNS c on b.name=c.COLUMN_NAME and a.name=c.TABLE_NAME
 where b.collation_name <> 'Chinese_PRC_CI_AS'
 and a.name = 'WF_ANONYMOUS_ACCESS';
-```
+
