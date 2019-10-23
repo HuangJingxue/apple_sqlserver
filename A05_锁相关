@@ -1,0 +1,116 @@
+--MSSQL中如何查看行锁等待
+--参考：https://help.aliyun.com/knowledge_detail/41801.html?spm=5176.11065259.1996646101.searchclickresult.476c7205yN2eOP
+use master;
+go
+WITH CTE_SID ( BSID, SID, sql_handle )        
+    AS ( SELECT [Blocking_Session_ID],
+                        [Session_ID] ,
+                        sql_handle
+               FROM     sys.dm_exec_requests
+               WHERE    [Blocking_Session_ID] <> 0
+               UNION ALL
+               SELECT   A.[Blocking_Session_ID] ,
+                        A.[Session_ID] ,
+                        A.sql_handle
+               FROM     sys.dm_exec_requests A
+                        JOIN CTE_SID B ON A.[Session_ID] = B.BSID
+             )
+    SELECT C.BSID,
+            C.SID ,
+            S.login_name ,
+            S.host_name ,
+            S.status ,
+            S.cpu_time ,
+            S.memory_usage ,
+            S.last_request_start_time ,
+            S.last_request_end_time ,
+            S.logical_reads ,
+            S.row_count ,
+            q.text
+    FROM CTE_SID C
+            JOIN sys.dm_exec_sessions S ON C.sid = s.[Session_ID]
+            CROSS APPLY sys.dm_exec_sql_text(C.sql_handle) Q
+    ORDER BY sid
+    
+    
+-- 死锁处理方法
+--https://help.aliyun.com/knowledge_detail/50927.html
+循环监控sys.sysprocesses
+    while 1=1
+begin
+select * from sys.sysprocesses where blocked<>0
+waitfor delay '00:00:01'  --循环间隔时间可以自定义
+end
+
+
+RDS for SQL Server死锁处理方法
+--循环监控sys.dm_tran_locks，sys.dm_os_waiting_tasks等视图
+while 1=1
+    Begin
+    SELECT
+    db.name DBName,
+    tl.request_session_id,  --被阻塞session
+    wt.blocking_session_id,  --阻塞头session
+    OBJECT_NAME(p.OBJECT_ID) BlockedObjectName,
+    tl.resource_type,
+    h1.TEXT AS RequestingText,
+    h2.TEXT AS BlockingText,
+    tl.request_mode
+    FROM sys.dm_tran_locks AS tl
+    INNER JOIN sys.databases db ON db.database_id = tl.resource_database_id
+    INNER JOIN sys.dm_os_waiting_tasks AS wt ON tl.lock_owner_address = wt.resource_address
+    INNER JOIN sys.partitions AS p ON p.hobt_id = tl.resource_associated_entity_id
+    INNER JOIN sys.dm_exec_connections ec1 ON ec1.session_id = tl.request_session_id
+    INNER JOIN sys.dm_exec_connections ec2 ON ec2.session_id = wt.blocking_session_id
+    CROSS APPLY sys.dm_exec_sql_text(ec1.most_recent_sql_handle) AS h1
+    CROSS APPLY sys.dm_exec_sql_text(ec2.most_recent_sql_handle) AS h2
+    waitfor delay '00:00:01' --循环间隔时间可以自定义
+    End
+    
+说明
+DBName：request_session_id操作的数据库。
+request_session_id：当前请求的会话 ID，即被阻塞的会话。
+blocking_session_id：阻塞源会话ID。
+BlockedObjectName：被阻塞的会话操作的对象。
+resource_type：等待的资源类型。
+RequestingText：当前会话执行的语句，即被阻塞的语句。
+BlockingText：阻塞源会话执行的语句。
+request_mode：当前会话请求的锁模式。
+
+RDS for SQL Server查看锁情况
+通过sys.dm_tran_locks系统视图查看锁的情况，查询哪些数据库有锁
+select str(request_session_id, 4, 0) as spid,
+convert(varchar(20), db_name(resource_database_id)) as DB_Name,
+case when resource_database_id = db_id() and resource_type = 'OBJECT'
+then convert(char(20), object_name(resource_Associated_Entity_id))
+else convert(char(20), resource_Associated_Entity_id)
+end as object,
+convert(varchar(12), resource_type) as resrc_type,
+convert(varchar(12), request_type) as req_type,
+convert(char(3), request_mode) as mode,
+convert(varchar(8), request_status) as status
+from sys.dm_tran_locks
+order by request_session_id desc;
+
+说明 MODE列是锁的模式，介绍如下：
+共享（S）用于不更改或不更新数据的操作（只读操作），如SELECT语句。
+更新（U）用于可更新的资源中。防止当多个会话在读取、锁定以及随后可能进行的资源更新时发生常见形式的死锁。
+排它（X）用于数据修改操作，例如INSERT、UPDATE或DELETE，确保不会同时同一资源进行多重更新。
+意向锁用于建立锁的层次结构。意向锁的类型为：意向共享（IS）、意向排它（IX）以及与意向排它共享（SIX）。
+架构锁在执行依赖于表架构的操作时使用。架构锁的类型为：架构修改（Sch-M）和架构稳定性（Sch-S）。
+大容量更新（BU）向表中大容量复制数据并指定了TABLOCK提示时使用。
+
+--查询哪些表有锁
+select request_session_id sessionid,
+resource_type type,
+convert(varchar(20), db_name(resource_database_id)) as db_name,
+OBJECT_NAME(resource_associated_entity_id, resource_database_id) objectname,
+request_mode rmode,
+request_status rstatus
+from sys.dm_tran_locks
+where resource_type in ('OBJECT')
+
+
+说明
+sessionid：锁表的进程。
+objectname：被锁的表名。
