@@ -1,0 +1,169 @@
+获取所有用户名
+Select name FROM Sysusers where status='2' and islogin='1'  
+
+islogin='1'   :表示帐户  
+islogin='0'   :表示角色  
+status='2'   :表示用户帐户  
+status='0'   :表示糸统帐户
+
+
+获取所有库名
+Select Name FROM Master..SysDatabases orDER BY Name
+
+
+数据库级账号
+use zhuyun
+SELECT u.name AS 用户名,
+g.name AS 数据库角色,
+case when g.name='db_owner' then '高级账号'
+else '普通账号'
+end '类型'
+FROM sys.database_principals u
+INNER JOIN sys.database_role_members m ON u.principal_id = m.member_principal_id
+INNER JOIN sys.database_principals g ON g.principal_id = m.role_principal_id
+where u.name != 'dbo'
+
+1、查看服务器角色相关信息 
+SP_HELPSRVROLE 
+SP_HELPSRVROLEMEMBER 服务器角色 
+SP_HELPSRVROLE 服务器角色 
+
+2、查看数据库角色相关信息 
+SP_HELPROLE 
+SP_HELPROLEMEMBER 数据库角色 
+SP_HELPROLE 数据库角色 
+
+3、查看用户相关信息 
+SP_HELPUSER 
+SP_HELPUSER 数据库用户名
+
+
+
+获取所有数据库名
+Select Name FROM Master..SysDatabases orDER BY Name
+
+
+--服务器级权限
+WITH CTE AS
+(
+SELECT u.name AS 用户名,
+u.is_disabled AS 是否禁用,
+g.name as 服务器角色,
+'√' as 'flag'
+FROM sys.server_principals u
+INNER JOIN sys.server_role_members m ON u.principal_id = m.member_principal_id
+INNER JOIN sys.server_principals g ON g.principal_id = m.role_principal_id
+)
+SELECT * FROM CTE PIVOT(MAX(flag) FOR 服务器角色 IN ([public],
+[sysadmin],
+[securityadmin],
+[serveradmin],
+[setupadmin],
+[processadmin],
+[diskadmin],
+[dbcreator],
+[bulkadmin])) AS T
+
+
+--数据库级权限
+WITH CTE AS
+(
+SELECT u.name AS 用户名,
+g.name AS 数据库角色,
+'√' as 'flag'
+FROM sys.database_principals u
+INNER JOIN sys.database_role_members m ON u.principal_id = m.member_principal_id
+INNER JOIN sys.database_principals g ON g.principal_id = m.role_principal_id
+)
+SELECT * FROM CTE PIVOT(MAX(flag) FOR 数据库角色 IN ([public],
+[db_owner],
+[db_accessadmin],
+[db_securityadmin],
+[db_ddladmin],
+[db_backupoperator],
+[db_datareader],
+[db_datawriter],
+[db_denydatareader],
+[db_denydatawriter])) AS T
+
+--数据库级单独权限
+select c.name as 用户名,b.name as 对象名,
+CASE b.type
+WHEN 'U' THEN 'Table'
+WHEN 'P' THEN 'Procedure'
+ELSE 'OTHER'
+END AS 对象类型,
+CASE WHEN a.ACTION = 26 AND a.PROTECTTYPE = 205 THEN '√' ELSE '' END AS 'REFERENCES',
+CASE WHEN a.ACTION = 193 AND a.PROTECTTYPE = 205 THEN '√' ELSE '' END AS 'SELECT',
+CASE WHEN a.ACTION = 195 AND a.PROTECTTYPE = 205 THEN '√' ELSE '' END AS 'INSERT',
+CASE WHEN a.ACTION = 197 AND a.PROTECTTYPE = 205 THEN '√' ELSE '' END AS 'UPDATE',
+CASE WHEN a.ACTION = 196 AND a.PROTECTTYPE = 205 THEN '√' ELSE '' END AS 'DELETE',
+CASE WHEN a.ACTION = 224 AND a.PROTECTTYPE = 205 THEN '√' ELSE '' END AS 'EXECUTE',
+CASE a.PROTECTTYPE
+WHEN 204 THEN 'GRANT_W_GRANT'
+WHEN 205 THEN 'GRANT'
+WHEN 206 THEN 'DENY'
+ELSE 'OTHER'
+END AS PROTECTTYPE
+from sysprotects a inner join sysobjects b on a.id = b.id
+inner join sysusers c on a.uid = c.uid
+
+--第一方案
+
+select a.spname 账号,
+case when b.urole='sysadmin' then '高级账号'
+else '普通账号'
+end '类型' from
+(SELECT name spname FROM sys.server_principals sp
+where type_desc = 'SQL_LOGIN' and name not like '##%')a
+left join
+(SELECT u.name uname,g.name urole
+FROM sys.server_principals u 
+INNER JOIN sys.server_role_members m ON u.principal_id = m.member_principal_id
+INNER JOIN sys.server_principals g ON g.principal_id = m.role_principal_id
+where u.name not like 'NT%' and u.name not like 'WIN%')b
+on a.spname = b.uname
+
+循环库查看明细
+
+获取所有库名
+Select Name FROM Master..SysDatabases orDER BY Name
+
+sp_helpuser <用户名>
+
+
+
+
+--第二方案
+循环所有库
+获取所有数据库名
+Select Name FROM Master..SysDatabases orDER BY Name
+
+获取每个库的账号
+SELECT distinct u.name AS 账号
+FROM sys.database_principals u
+INNER JOIN sys.database_role_members m ON u.principal_id = m.member_principal_id
+where u.name != 'dbo' 
+
+
+查看明细
+WITH CTE AS
+(
+SELECT u.name AS 账号,
+g.name AS 数据库角色,
+'√' as 'flag'
+FROM sys.database_principals u
+INNER JOIN sys.database_role_members m ON u.principal_id = m.member_principal_id
+INNER JOIN sys.database_principals g ON g.principal_id = m.role_principal_id
+where u.name != 'dbo'
+)
+SELECT * FROM CTE PIVOT(MAX(flag) FOR 数据库角色 IN ([public],
+[db_owner],
+[db_accessadmin],
+[db_securityadmin],
+[db_ddladmin],
+[db_backupoperator],
+[db_datareader],
+[db_datawriter],
+[db_denydatareader],
+[db_denydatawriter])) AS T
