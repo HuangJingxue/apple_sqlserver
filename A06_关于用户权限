@@ -157,6 +157,47 @@ go
 alter server role [sysadmin] add member testuser;
 go
 
+USE [master]
+GO
+CREATE LOGIN [username36] WITH PASSWORD=N'xxx', DEFAULT_DATABASE=[master], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+GO
+
+USE [testdb]
+GO
+CREATE USER [username36] FOR LOGIN [username36]
+GO
+USE [testdb]
+GO
+ALTER ROLE [db_datareader] ADD MEMBER [username36]
+GO
+USE [testdb]
+GO
+ALTER ROLE [db_datawriter] ADD MEMBER [username36]
+GO
+USE [zhuyun]
+GO
+CREATE USER [username36] FOR LOGIN [username36]
+GO
+USE [zhuyun]
+GO
+ALTER ROLE [db_datawriter] ADD MEMBER [username36]
+GO
+
+
+
+USE [tempdb]
+GO
+CREATE USER [username40] FOR LOGIN [username40]
+GO
+USE [tempdb]
+GO
+ALTER ROLE [db_ddladmin] ADD MEMBER [username40]
+GO
+USE [zhuyun]
+GO
+ALTER ROLE [db_datareader] DROP MEMBER [username40]
+GO
+
 
 --创建用户映射,映射到此登录名的用户
 use [model]
