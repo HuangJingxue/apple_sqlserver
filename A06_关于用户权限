@@ -167,3 +167,372 @@ SELECT * FROM CTE PIVOT(MAX(flag) FOR 数据库角色 IN ([public],
 [db_datawriter],
 [db_denydatareader],
 [db_denydatawriter])) AS T
+
+小子pk了
+SQLServer创建用户登录
+创建用户登录注意事项
+密码是区分大小写的。
+
+只有创建SQL Server登录时，才支持对密码预先进行哈希运算。
+
+如果指定MUST_CHANGE，则CHECK_EXPIRATION和 CHECK_POLICY必须设置为 ON。 否则，该语句将失败。
+
+不支持CHECK_POLICY=OFF和 CHECK_EXPIRATION=ON的组合。
+
+如果CHECK_POLICY设置为OFF，将对lockout_time进行重置，并将CHECK_EXPIRATION设置为OFF。
+
+只有在Windows Server 2003及更高版本上才会强制执行CHECK_EXPIRATION 和 CHECK_POLICY。 
+
+从证书或非对称密钥创建的登录名仅用于代码签名。不能用于连接到 SQL Server。仅当master中已存在证书或非对称密钥时，才能从证书或非对称密钥创建登录名。
+
+有关用于传输登录名的脚本，请参阅如何在 SQL Server 2005 和 SQL Server 2008 的实例之间传输登录名和密码。
+
+自动创建登录名将启用新的登录名，并授予它服务器级CONNECT SQL 权限。
+
+服务器的身份验证模式必须匹配登录名类型才能允许访问。
+
+有关设计权限系统的信息，请参阅 Getting Started with Database Engine Permissions。
+
+只有具有针对服务器的ALTER ANY LOGIN权限或securityadmin固定服务器角色的成员身份的用户才可创建登录。
+
+如果使用CREDENTIAL选项，则还需要对此服务器的ALTER ANY CREDENTIAL权限。
+
+使用SSMS数据库管理工具创建用户登录
+1、连接数据库-》展开安全性-》选择登录名-》选择新建登录名。
+
+
+
+2、在登录名-新建弹出框-》点击常规-》输入登录名-》选择sqlserver身份验证-》输入密码-》选择不强制实施密码过期策略-》选择默认数据库-》选择默认语言。
+
+
+
+3、在登录名-新建弹出框-》点击服务器角色-》选择要向角色授予的安全特权。
+
+
+
+4、在登录名-新建弹出框-》点击用户映射-》选择用户可以登录的数据库-》选择用户拥有的登录数据库的权限。
+
+
+
+5、在登录名-新建弹出框-》点击安全对象-》点击搜索添加安全对象-》安全对象添加完成后选择安全对象权限。
+
+
+
+6、在登录名-新建弹出框-》点击状态-》选择默认即可。
+
+
+
+7、点击确定-》查看添加结果。
+
+
+
+使用T-SQL脚本创建用户登录
+语法
+--声明数据库引用
+use testss;
+go
+
+创建用户登录
+create login login_name
+with
+password={ 'password' | hashed_password hashed }
+[must_change][,]
+[sid=0x14585E90117152449347750164BA00A7][,]
+[default_database=database_name][,]
+[default_language=language][,]
+[check_expiration={ on | off }][,]
+[check_policy={ on | off }][,]
+[credential=credential_name]
+
+语法注释
+--login_name
+--指定创建的登录名。有四种类型的登录：SQLServer登录、Windows登录、证书映射登录和非对称密钥映射登录。
+--在创建从Windows域帐户映射的登录名时，必须以[<domainName>\<login_name>]格式使用Windows 2000之前的用户登录名。
+--不能使用login_name@DomainName格式的UPN。
+--有关示例，请参阅本文后面的示例D。身份验证登录的类型为sysname，它必须符合标识符规则，且不能包含“\”。
+--Windows登录名可以包含“\”。Active Directory用户的登录名需少于21个字符。
+
+--password='password*'
+--仅适用于SQL Server登录。指定正在创建的登录名的密码。应使用强密码。
+--有关详细信息，请参阅强密码和密码策略。从SQL Server 2012 (11.x)开始，存储的密码信息使用 SHA-512 加盐密码进行计算。
+--密码是区分大小写的。密码应始终至少包含 8 个字符，并且不能超过128个字符。
+--密码可以包含 a-z、A-Z、0-9 和大多数非字母数字字符。 密码不能包含单引号或 login_name。
+
+--password=hashed_password
+--仅适用于hashed关键字。指定要创建的登录名的密码的哈希值。
+--hashed仅适用于SQL Server登录。指定在password参数后输入的密码已经过哈希运算。
+--如果未选择此选项，则在将作为密码输入的字符串存储到数据库中之前，对其进行哈希运算。
+--此选项应仅用于在服务器之间迁移数据库。切勿使用hashed选项创建新的登录名。hashed选项不能用于SQL 7或更早版本创建的哈希。
+
+--must_change
+--仅适用于SQL Server登录。如果包括此选项，则SQL Server将在首次使用新登录时提示用户输入新密码。
+
+--sid=sid
+--用于重新创建登录名。仅适用于SQL Server身份验证登录，不适用于Windows身份验证登录。指定新SQL Server身份验证登录的sid。
+--如果未使用此选项，SQL Server将自动分配sid。sid结构取决于SQL Server版本。 QL Server登录sid：基于GUID的16 字节(binary(16))文本值。 例如，sid 0x14585E90117152449347750164BA00A7。
+
+--default_database=database
+--指定将指派给登录名的默认数据库。如果未包括此选项，则默认数据库将设置为master。
+
+--default_language=language
+--指定将指派给登录名的默认语言。如果未包括此选项，则默认语言将设置为服务器的当前默认语言。即使将来服务器的默认语言发生更改，登录名的默认语言也仍保持不变。
+
+--check_expiration={ on | off }
+--仅适用于SQL Server登录。 指定是否应对此登录帐户强制实施密码过期策略。 默认值为off。
+
+--check_policy={ on | off }
+--仅适用于SQL Server登录。 指定应对此登录强制实施运行SQL Server 计算机的 Windows 密码策略。 默认值为on。
+--如果 Windows 策略要求强密码，密码必须至少包含以下四个特点中的三个：
+--大写字符 (A-Z)。
+--小写字符 (a-z)。
+--数字 (0-9)。
+--一个非字母数字字符，如空格、、@、*、^、%、!、$、# 或 &。
+
+--credential=credential_name
+--将映射到新SQL Server登录的凭据名称。 该凭据必须已存在于服务器中。当前此选项只将凭据链接到登录名。凭据不能映射到系统管理员(sa)登录名。
+
+示例
+--声明数据库引用
+use testss;
+go
+
+--创建登录用户
+create login testuser
+with
+password='123456',
+--must_change,
+--sid=0x14585E90117152449347750164BA00A7,
+default_database=master,
+--default_language=language,
+check_expiration=off,
+check_policy=off
+--credential=[sysadmin]
+go
+
+--可以添加多个服务器角色
+--创建服务器角色, 服务器角色用于向用户授权服务器范围内的安全特权
+--alter server role [bulkadmin] add member testuser;
+--go
+--alter server role [dbcreator] add member testuser;
+--go
+--alter server role [diskadmin] add member testuser;
+--go
+--alter server role [processadmin] add member testuser;
+--go
+--alter server role [securityadmin] add member testuser;
+--go
+--alter server role [serveradmin] add member testuser;
+--go
+--alter server role [setupadmin] add member testuser;
+--go
+alter server role [sysadmin] add member testuser;
+go
+
+
+--创建用户映射,映射到此登录名的用户
+use [model]
+go
+create user testuser for login testuser;
+go
+
+--use [msdb]
+--go
+--create user testuser for login testuser;
+--go
+
+--use [ReportServer]
+--go
+--create user testuser for login testuser;
+--go
+
+--use [ReportServerTempDB]
+--go
+--create user testuser for login testuser;
+--go
+
+--use [tempdb]
+--go
+--create user testuser for login testuser;
+--go
+
+use [testss]
+go
+create user testuser for login testuser;
+go
+
+----创建用户登录数据库
+--use [master]
+--go
+--create user [testuser] for login [testuser];
+--go
+
+----创建用户登录多个数据库
+--use [testss]
+--go
+--create user [testuser] for login [testuser];
+--go
+
+----声明数据库应用
+--use [testss]
+--go
+
+----授予不安全的程序集
+--grant unsafe assembly to testuser;
+--go
+
+----授予查看服务器状态
+--grant view server state to testuser;
+--go
+
+----授予查看任意定义
+--grant view any definttion to testuser;
+--go
+
+----授予查看任意数据库
+--grant view any database to testuser;
+--go
+
+----授予创建DDL事件通知
+--grant create ddl event notification to testuser;
+--go
+
+----授予创建端点
+--grant create endpoint to testuser;
+--go
+
+----授予创建服务器角色
+--grant create server role to testuser;
+--go
+
+----授予创建跟踪事件通知
+--grant create trace event notification to testuser;
+--go
+
+----授予创建可用性组
+--grant create availability group to testuser;
+--go
+
+----授予创建任意数据库
+--grant create any database to testuser;
+--go
+
+----授予更改服务器状态
+--grant alter server state to testuser;
+--go
+
+----授予更改跟踪
+--grant alter trace to testuser;
+--go
+
+----授予更改任何服务器角色
+--grant alter any server role to testuser;
+--go
+
+----授予更改任何可用性组
+--grant alter any availability group to testuser;
+--go
+
+----授予更改任意登录名
+--grant alter any login to testuser;
+--go
+
+----授予更改任意端点
+--grant alter any endpoint to testuser;
+--go
+
+----授予更改任意服务器审核
+--grant alter any server audit to testuser;
+--go
+
+----授予更改任意权限
+--grant alter any connection to testuser;
+--go
+
+----授予更改任意连接服务器
+--grant alter any linked server to testuser;
+--go
+
+----授予更改任意凭据
+--grant alter any credential to testuser;
+--go
+
+----授予更改任意事件会话
+--grant alter any event session to testuser;
+--go
+
+----授予更改任意事件通知
+--grant alter any event notification to testuser;
+--go
+
+----授予更改任意数据库
+--grant alter any database to testuser;
+--go
+
+----授予更改设置
+--grant alter settings to testuser;
+--go
+
+----授予更改资源
+--grant alter resources to testuser;
+--go
+
+----授予关闭
+--grant shutdown to testuser;
+--go
+
+----授予管理大容量操作
+--grant administer bulk operations to testuser;
+--go
+
+----授予控制服务器
+--grant control server to testuser;
+--go
+
+----授予连接SQL
+--grant connect sql to testuser;
+--go
+
+----授予外部访问程序集
+--grant external access assembly to testuser;
+--go
+
+----授予验证服务器
+--grant authenticate server to testuser;
+--go
+
+--设置是否允许连接到数据库引擎
+--deny connect sql to testuser;
+--go
+--是否允许登录
+--alter login testuser disable;
+--go
+
+
+----用户状态
+----声明默认数据库引用
+--use [testuser]
+--go
+----是否允许用户连接到数据库引擎
+--deny connect sql to [testuser];
+--go
+----是否允许登录
+--alter login [testuser] disable
+--go
+
+示例结果
+
+
+使用新创建的用户名登录
+1、在对象资源管理器中-》点击新建连接。
+
+
+
+2、在连接到服务器弹出框-》选择sqlserver身份验证-》输入用户名和密码-》点击连接。
+
+
+
+3、查看结果。
+
+
+
+ 
