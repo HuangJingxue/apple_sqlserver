@@ -36,6 +36,8 @@ SQLServer WEB 和SQLServer EE的区别
 参考：https://technet.microsoft.com/zh-cn/library/cc645993(v=sql.110).aspx
 
 sqlserver 修改列的字符集 https://confluence.atlassian.com/confkb/how-to-fix-the-collation-of-a-microsoft-sql-server-confluence-database-687216725.html?spm=a2c4e.10696291.0.0.25e819a4A8pKcF
+
+SQL Server 2016 的各版本和支持的功能：https://docs.microsoft.com/zh-cn/sql/sql-server/editions-and-components-of-sql-server-2016?view=sql-server-ver15
 ```
 常见报错：
 17300  SQL Server 无法运行新的系统任务，原因是内存不足或配置的会话数超过了服务器允许的最大数。 请查看服务器是否有足够的内存。 请使用 sp_configure 以及选项 '用户连接' 查看允许的最大用户连接数。 请使用 sys.dm_exec_sessions 检查当前会话数，包括用户进程。
